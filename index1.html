@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Folha Ponto — Analisador</title>
+
+  <!-- ✅ PDF.js (jsDelivr - mais confiável no GitHub Pages) -->
+  <script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@4.2.67/build/pdf.min.js"></script>
+
+  <style>
+    :root{
+      --navy:#0b1f3b;
+      --pool:#00bcd4;
+      --orange:#ff7a00;
+
+      --bg:#f4f7fb;
+      --card:#ffffff;
+      --text:#0f172a;
+      --muted:#64748b;
+      --border:#e6edf6;
+
+      --ok-bg:#e9fbf0;
+      --ok-bd:#b8f1cf;
+      --ok-tx:#0f5132;
+
+      --bad-bg:#ffe9ea;
+      --bad-bd:#f6b7be;
+      --bad-tx:#a10f1a;
+
+      --abs-bg:#fff6da;
+      --abs-bd:#ffd27a;
+      --abs-tx:#8a4b00;
+
+      --chip:#eef4ff;
+      --shadow:0 12px 30px rgba(11,31,59,.08);
+    }
+
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family: Arial, Helvetica, sans-serif;
+      background:
+        radial-gradient(900px 500px at 10% 0%, rgba(0,188,212,.10), transparent 60%),
+        radial-gradient(700px 400px at 90% 10%, rgba(255,122,0,.10), transparent 55%),
+        var(--bg);
+      color:var(--text);
+    }
+
+    .topbar{
+      background: linear-gradient(90deg, var(--navy), #062a5a);
+      color:#fff;
+      padding:18px 0;
+      box-shadow: 0 10px 24px rgba(0,0,0,.12);
+    }
+    .wrap{
+      max-width:1100px;
+      margin:0 auto;
+      padding:22px 18px 60px;
+    }
+    .topbar .wrap{
+      padding-top:0;padding-bottom:0;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+    }
+    .brand{ display:flex; align-items:center; gap:12px; }
+    .logo{
+      width:44px;height:44px;border-radius:14px;
+      background:
+        linear-gradient(135deg, var(--pool), rgba(0,188,212,.25)),
+        radial-gradient(18px 18px at 70% 30%, rgba(255,255,255,.65), transparent 70%);
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,.15);
+      display:grid;place-items:center;
+      font-weight:900;
+      letter-spacing:.5px;
+    }
+    .brand h1{ margin:0; font-size:18px; font-weight:900; line-height:1.1; }
+
+    .sub{
+      margin:14px 0 18px;
+      color:var(--muted);
+      font-size:13px;
+    }
+
+    .panel{
+      background:var(--card);
+      border:1px solid var(--border);
+      border-radius:18px;
+      padding:16px;
+      box-shadow: var(--shadow);
+      display:flex;
+      flex-wrap:wrap;
+      gap:12px;
+      align-items:center;
+      justify-content:space-between;
+    }
+    .panel-left{ min-width:260px; }
+    .panel-title{ font-weight:900; margin:0; color:var(--navy); }
+    .panel-hint{ margin:6px 0 0; color:var(--muted); font-size:12px; }
+
+    .btns{ display:flex; gap:10px; flex-wrap:wrap; align-items:center; justify-content:flex-end; }
+
+    button{
+      border:0;
+      border-radius:12px;
+      padding:10px 14px;
+      font-weight:900;
+      cursor:pointer;
+      transition: transform .05s ease, filter .15s ease;
+    }
+    button:active{ transform: translateY(1px); }
+
+    .btn-orange{
+      background: linear-gradient(180deg, var(--orange), #ff5e00);
+      color:#fff;
+    }
+    .btn-orange:hover{ filter:brightness(1.05); }
+
+    .btn-ghost{
+      background:#fff;
+      border:1px solid var(--border);
+      color:var(--navy);
+    }
+    .btn-ghost:hover{ filter:brightness(0.98); }
+
+    .btn-disabled{
+      background:#e9eef5;
+      color:#7a889c;
+      cursor:not-allowed;
+    }
+
+    .file-hidden{
+      position:absolute;
+      left:-9999px;
+      width:1px;
+      height:1px;
+      opacity:0;
+    }
+    .label-btn{
+      display:inline-block;
+      text-align:center;
+      border:0;
+      border-radius:12px;
+      padding:10px 14px;
+      font-weight:900;
+      cursor:pointer;
+      transition: transform .05s ease, filter .15s ease;
+      background:var(--navy);
+      color:#fff;
+      user-select:none;
+    }
+    .label-btn:active{ transform: translateY(1px); }
+    .label-btn:hover{ filter:brightness(1.08); }
+
+    .msg{ margin-top:10px; font-size:13px; color:#0f172a; }
+
+    .cards{ margin-top:18px; display:flex; flex-direction:column; gap:16px; }
+
+    .card{
+      background:var(--card);
+      border:1px solid rgba(0,188,212,.25);
+      border-radius:20px;
+      padding:18px;
+      box-shadow: var(--shadow);
+      position:relative;
+      overflow:hidden;
+    }
+    .card:before{
+      content:"";
+      position:absolute;
+      inset:0;
+      background:
+        radial-gradient(600px 200px at 10% 0%, rgba(0,188,212,.10), transparent 60%),
+        radial-gradient(520px 220px at 90% 20%, rgba(255,122,0,.08), transparent 55%);
+      pointer-events:none;
+    }
+    .card > *{ position:relative; }
+
+    .overlay{
+      position:fixed;
+      inset:0;
+      background:rgba(11,31,59,.28);
+      display:none;
+      align-items:center;
+      justify-content:center;
+      z-index:9999;
+    }
+    .overlay.on{ display:flex; }
+    .modal{
+      width:380px;
+      background:#fff;
+      border:1px solid var(--border);
+      border-radius:20px;
+      padding:16px;
+      box-shadow:0 18px 45px rgba(0,0,0,.18);
+      display:flex;
+      gap:12px;
+      align-items:center;
+    }
+    .spinner{
+      width:36px; height:36px;
+      border-radius:999px;
+      border:4px solid #e5e7eb;
+      border-top-color:var(--pool);
+      animation:spin 1s linear infinite;
+    }
+    @keyframes spin{ to{ transform:rotate(360deg);} }
+  </style>
+</head>
+
+<body>
+  <div class="topbar">
+    <div class="wrap">
+      <div class="brand">
+        <div class="logo">FP</div>
+        <div>
+          <h1>Folha Ponto — Relatório Inteligente</h1>
+        </div>
+      </div>
+      <div style="font-weight:900; opacity:.9; font-size:12px;">
+        HE &gt; 01:12 | Faltas injust. ≥ 10
+      </div>
+    </div>
+  </div>
+
+  <div class="wrap">
+    <p class="sub">
+      Selecione o PDF, clique em <b>Analisar PDF</b> e o sistema mostrará apenas os colaboradores que infringem as regras.
+    </p>
+
+    <div class="panel">
+      <div class="panel-left">
+        <p class="panel-title">1) Selecione o PDF • 2) Clique em “Analisar PDF”</p>
+        <p class="panel-hint">Mostra apenas quem excedeu HE ou tem faltas injustificadas ≥ 10.</p>
+        <div class="msg" id="msg"></div>
+      </div>
+
+      <div class="btns">
+        <input id="pdfFile" type="file" accept=".pdf,application/pdf" class="file-hidden" />
+        <label class="label-btn" for="pdfFile">Selecionar PDF</label>
+
+        <button class="btn-orange btn-disabled" id="btnAnalyze" disabled>Analisar PDF</button>
+        <button class="btn-ghost" id="btnClear">Limpar</button>
+      </div>
+    </div>
+
+    <div class="cards" id="cards"></div>
+  </div>
+
+  <div class="overlay" id="overlay">
+    <div class="modal">
+      <div class="spinner"></div>
+      <div style="min-width:0;">
+        <div style="font-weight:900; color:var(--navy);" id="loadingTitle">Carregando...</div>
+        <div style="color:#6b7280;font-size:13px;margin-top:2px;" id="loadingSub">Analisando PDF</div>
+      </div>
+    </div>
+  </div>
+
+<script>
+  // ========= CONFIG =========
+  const EXTRA_LIMIT_MIN = 72; // 01:12
+  const EXTRA_LIMIT_LABEL = "01:12";
+
+  // ========= HELPERS =========
+  const $ = (id) => document.getElementById(id);
+  function setMsg(text){ $("msg").textContent = text || ""; }
+  function setLoading(on, title="Carregando...", sub="Analisando PDF"){
+    $("overlay").classList.toggle("on", !!on);
+    $("loadingTitle").textContent = title;
+    $("loadingSub").textContent = sub;
+  }
+  function normSpaces(s){ return (s||"").replace(/\s+/g," ").trim(); }
+
+  // ========= PDF.JS READY + WORKER =========
+  function ensurePdfJs(){
+    if(!window.pdfjsLib){
+      setMsg("Erro: PDF.js não carregou. Verifique sua internet e atualize a página.");
+      return false;
+    }
+    // ✅ worker correto do jsDelivr
+    window.pdfjsLib.GlobalWorkerOptions.workerSrc =
+      "https://cdn.jsdelivr.net/npm/pdfjs-dist@4.2.67/build/pdf.worker.min.js";
+    return true;
+  }
+
+  // ========= EXTRAIR TEXTO =========
+  async function extractTextFromPdf(arrayBuffer){
+    const doc = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+    const total = doc.numPages;
+    let full = "";
+    for(let p=1; p<=total; p++){
+      setLoading(true, "Carregando...", `Lendo página ${p} de ${total}`);
+      const page = await doc.getPage(p);
+      const content = await page.getTextContent({ includeMarkedContent: true });
+      full += "\n" + content.items.map(it => it?.str || "").join(" ");
+    }
+    return normSpaces(full);
+  }
+
+  // ========= PARSER (placeholder simples) =========
+  // (mantive mínimo aqui só para você confirmar que "lê" o PDF.
+  //  Depois que você confirmar que extrai texto, eu encaixo o parser completo.)
+  function parseEmployees(text){
+    // Debug: se o texto vier vazio, você vai ver isso
+    if(!text || text.length < 50) return [];
+    // só retorna um card "dummy" para provar leitura
+    return [{
+      name: "LEITURA OK (PDF EXTRAÍDO)",
+      code: "—",
+      costCenter: "—",
+      company: "—",
+      daysWorked: "—",
+      totalAbsences: 0,
+      unjustifiedAbsences: 0,
+      extrasOk: [{date:"02/02", time:"01:07"}],
+      extrasBad: [{date:"07/02", time:"09:04"}],
+      absences: [{date:"02/02"}]
+    }];
+  }
+
+  // ========= RENDER (prova) =========
+  function render(employees){
+    if(!employees.length){
+      $("cards").innerHTML = `
+        <div class="card" style="border-color: var(--border);">
+          <div style="font-weight:900; color: var(--navy);">Não consegui extrair texto do PDF.</div>
+          <div style="margin-top:8px; color:#64748b;">Se o PDF for escaneado (imagem), precisa OCR. Se for texto, vamos ajustar o parser.</div>
+        </div>
+      `;
+      return;
+    }
+
+    $("cards").innerHTML = employees.map(e => `
+      <div class="card">
+        <div style="font-weight:900; color: var(--navy); font-size:18px;">${e.name}</div>
+        <div style="margin-top:8px; color:#64748b;">
+          Se você está vendo este card, o PDF foi lido com sucesso ✅
+        </div>
+      </div>
+    `).join("");
+  }
+
+  // ========= UI =========
+  let currentFile = null;
+
+  $("pdfFile").addEventListener("change", (e)=>{
+    const f = e.target.files && e.target.files[0];
+    if(!f) return;
+
+    const isPdf = f.name.toLowerCase().endsWith(".pdf");
+    if(!isPdf){
+      currentFile = null;
+      setMsg("Selecione um arquivo PDF válido.");
+      $("btnAnalyze").disabled = true;
+      $("btnAnalyze").classList.add("btn-disabled");
+      return;
+    }
+    currentFile = f;
+    setMsg("PDF selecionado: " + f.name);
+    $("btnAnalyze").disabled = false;
+    $("btnAnalyze").classList.remove("btn-disabled");
+  });
+
+  $("btnClear").addEventListener("click", ()=>{
+    currentFile = null;
+    $("pdfFile").value = "";
+    $("cards").innerHTML = "";
+    setMsg("");
+    $("btnAnalyze").disabled = true;
+    $("btnAnalyze").classList.add("btn-disabled");
+  });
+
+  $("btnAnalyze").addEventListener("click", async ()=>{
+    if(!currentFile) return;
+    if(!ensurePdfJs()) return;
+
+    setLoading(true, "Carregando...", "Preparando leitura...");
+    setMsg("Carregando...");
+
+    try{
+      const buf = await currentFile.arrayBuffer();
+      const text = await extractTextFromPdf(buf);
+      setLoading(true, "Carregando...", "Interpretando dados...");
+
+      const employees = parseEmployees(text);
+      render(employees);
+
+      setMsg("");
+    }catch(err){
+      console.error(err);
+      setMsg("Erro ao analisar o PDF.");
+    }finally{
+      setLoading(false);
+    }
+  });
+
+  // garante worker ao carregar
+  ensurePdfJs();
+</script>
+</body>
+</html>
