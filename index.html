@@ -5,8 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Folha Ponto — Analisador</title>
 
-  <!-- ✅ PDF.js (jsDelivr - mais confiável no GitHub Pages) -->
-  <script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@4.2.67/build/pdf.min.js"></script>
+  <!-- PDF.js (CDN) - TROCA: cdnjs -> jsDelivr (mais estável com tracking prevention) -->
+  <script defer src="https://cdn.jsdelivr.net/npm/pdfjs-dist@4.2.67/build/pdf.min.js"></script>
 
   <style>
     :root{
@@ -178,6 +178,207 @@
     }
     .card > *{ position:relative; }
 
+    .card-head{
+      display:flex;
+      gap:12px;
+      justify-content:space-between;
+      align-items:flex-start;
+      flex-wrap:wrap;
+    }
+    .name{
+      font-size:18px;
+      font-weight:900;
+      margin:0;
+      color:var(--navy);
+      letter-spacing:.2px;
+      text-transform:uppercase;
+    }
+    .meta{
+      margin-top:6px;
+      color:var(--muted);
+      font-size:13px;
+      line-height:1.35;
+    }
+    .meta b{ color:#0f172a; }
+
+    .badges{
+      display:flex;
+      gap:10px;
+      align-items:center;
+      flex-wrap:wrap;
+    }
+    .badge{
+      font-size:12px;
+      font-weight:900;
+      padding:7px 10px;
+      border-radius:999px;
+      border:1px solid var(--border);
+      background:var(--chip);
+      color:var(--navy);
+      white-space:nowrap;
+    }
+    .badge-red{
+      background:var(--bad-bg);
+      color:var(--bad-tx);
+      border-color:var(--bad-bd);
+    }
+    .badge-abs{
+      background:var(--abs-bg);
+      color:var(--abs-tx);
+      border-color:var(--abs-bd);
+    }
+
+    .stats{
+      margin-top:14px;
+      display:grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap:10px;
+    }
+    .stat{
+      background:rgba(255,255,255,.75);
+      border:1px solid var(--border);
+      border-radius:14px;
+      padding:12px;
+      backdrop-filter: blur(6px);
+    }
+    .stat .label{
+      font-size:11px;
+      color:#7b8aa5;
+      margin-bottom:6px;
+      font-weight:800;
+    }
+    .stat .val{
+      font-size:16px;
+      font-weight:900;
+      color:#0f172a;
+    }
+    .stat.warn{
+      background:var(--abs-bg);
+      border-color:var(--abs-bd);
+    }
+    .stat.warn .label{ color:#8a4b00; }
+    .stat.warn .val{ color:#7c2d12; }
+    .mini{
+      margin-top:6px;
+      font-size:11px;
+      font-weight:900;
+      color:#8a4b00;
+      display:flex;
+      gap:6px;
+      align-items:center;
+    }
+
+    .toggle{
+      margin-top:12px;
+      color:var(--pool);
+      font-weight:900;
+      font-size:13px;
+      cursor:pointer;
+      display:flex;
+      align-items:center;
+      gap:8px;
+      user-select:none;
+    }
+    .chev{
+      width:16px;
+      display:inline-block;
+      transition:transform .15s ease;
+      font-weight:900;
+      color:var(--navy);
+    }
+    .chev.open{ transform:rotate(180deg); }
+
+    .tabs{
+      margin-top:12px;
+      display:inline-flex;
+      background:#eef5ff;
+      padding:4px;
+      border-radius:14px;
+      gap:4px;
+      border:1px solid rgba(0,188,212,.25);
+    }
+    .tab{
+      border:0;
+      border-radius:12px;
+      padding:8px 12px;
+      font-weight:900;
+      font-size:13px;
+      background:transparent;
+      color:#355a7a;
+      cursor:pointer;
+    }
+    .tab.active{
+      background:#fff;
+      border:1px solid var(--border);
+      color:var(--navy);
+      box-shadow:0 1px 0 rgba(0,0,0,.03);
+    }
+
+    .grid{
+      margin-top:12px;
+      display:grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap:10px;
+    }
+    .tile{
+      border-radius:16px;
+      padding:12px;
+      min-height:82px;
+      background:var(--ok-bg);
+      color:var(--ok-tx);
+      border:1px solid var(--ok-bd);
+    }
+    .tile.red{
+      background:var(--bad-bg);
+      color:var(--bad-tx);
+      border-color:var(--bad-bd);
+    }
+    .tile.abs{
+      background:var(--abs-bg);
+      color:var(--abs-tx);
+      border-color:var(--abs-bd);
+    }
+    .tile .date{
+      font-size:12px;
+      font-weight:900;
+      opacity:.9;
+    }
+    .tile .time{
+      margin-top:8px;
+      font-size:18px;
+      font-weight:900;
+    }
+    .tile .warn{
+      margin-top:8px;
+      font-size:12px;
+      font-weight:900;
+      color:#ef4444;
+      display:flex;
+      align-items:center;
+      gap:8px;
+    }
+
+    .alert{
+      margin-top:12px;
+      border-radius:16px;
+      padding:12px;
+      font-size:13px;
+      font-weight:900;
+      display:flex;
+      gap:10px;
+      align-items:center;
+    }
+    .alert.red{
+      background:var(--bad-bg);
+      border:1px solid var(--bad-bd);
+      color:var(--bad-tx);
+    }
+    .alert.abs{
+      background:var(--abs-bg);
+      border:1px solid var(--abs-bd);
+      color:var(--abs-tx);
+    }
+
     .overlay{
       position:fixed;
       inset:0;
@@ -207,6 +408,14 @@
       animation:spin 1s linear infinite;
     }
     @keyframes spin{ to{ transform:rotate(360deg);} }
+
+    @media (max-width: 980px){
+      .stats{ grid-template-columns:1fr 1fr; }
+      .grid{ grid-template-columns: repeat(2, 1fr); }
+    }
+    @media (max-width: 520px){
+      .stats{ grid-template-columns:1fr; }
+    }
   </style>
 </head>
 
@@ -266,81 +475,348 @@
 
   // ========= HELPERS =========
   const $ = (id) => document.getElementById(id);
+
+  function hhmmToMinutes(hhmm){
+    const [h,m] = (hhmm || "").split(":").map(n => parseInt(n,10));
+    if(Number.isNaN(h) || Number.isNaN(m)) return 0;
+    return h*60 + m;
+  }
+  function minutesToHHMM(min){
+    const h = Math.floor(min/60);
+    const m = min%60;
+    return String(h).padStart(2,"0")+":"+String(m).padStart(2,"0");
+  }
   function setMsg(text){ $("msg").textContent = text || ""; }
   function setLoading(on, title="Carregando...", sub="Analisando PDF"){
     $("overlay").classList.toggle("on", !!on);
     $("loadingTitle").textContent = title;
     $("loadingSub").textContent = sub;
   }
-  function normSpaces(s){ return (s||"").replace(/\s+/g," ").trim(); }
+  function escapeHtml(s){
+    return (s||"").replace(/[&<>"']/g, (c)=>({
+      "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
+    }[c]));
+  }
+  function normSpaces(s){
+    return (s||"").replace(/\s+/g," ").trim();
+  }
 
-  // ========= PDF.JS READY + WORKER =========
-  function ensurePdfJs(){
+  // ========= PDF.js INIT (NOVO - garante que pdfjsLib existe) =========
+  function initPdfJsOrShowError(){
     if(!window.pdfjsLib){
-      setMsg("Erro: PDF.js não carregou. Verifique sua internet e atualize a página.");
+      setMsg("Erro: PDF.js não carregou. Verifique a internet e recarregue a página (Ctrl+F5).");
+      $("btnAnalyze").disabled = true;
+      $("btnAnalyze").classList.add("btn-disabled");
       return false;
     }
-    // ✅ worker correto do jsDelivr
+
+    // worker do mesmo CDN do pdf.min.js
     window.pdfjsLib.GlobalWorkerOptions.workerSrc =
       "https://cdn.jsdelivr.net/npm/pdfjs-dist@4.2.67/build/pdf.worker.min.js";
+
     return true;
   }
 
-  // ========= EXTRAIR TEXTO =========
+  // roda quando a página terminar de carregar (script defer já carregou)
+  window.addEventListener("load", () => {
+    initPdfJsOrShowError();
+  });
+
+  // ========= PDF TEXT EXTRACTION (mais confiável) =========
   async function extractTextFromPdf(arrayBuffer){
     const doc = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+
     const total = doc.numPages;
     let full = "";
+
     for(let p=1; p<=total; p++){
       setLoading(true, "Carregando...", `Lendo página ${p} de ${total}`);
       const page = await doc.getPage(p);
       const content = await page.getTextContent({ includeMarkedContent: true });
-      full += "\n" + content.items.map(it => it?.str || "").join(" ");
+
+      const pageText = content.items.map(it => (it && it.str) ? it.str : "").join(" ");
+      full += "\n" + pageText;
     }
     return normSpaces(full);
   }
 
-  // ========= PARSER (placeholder simples) =========
-  // (mantive mínimo aqui só para você confirmar que "lê" o PDF.
-  //  Depois que você confirmar que extrai texto, eu encaixo o parser completo.)
-  function parseEmployees(text){
-    // Debug: se o texto vier vazio, você vai ver isso
-    if(!text || text.length < 50) return [];
-    // só retorna um card "dummy" para provar leitura
-    return [{
-      name: "LEITURA OK (PDF EXTRAÍDO)",
-      code: "—",
-      costCenter: "—",
-      company: "—",
-      daysWorked: "—",
-      totalAbsences: 0,
-      unjustifiedAbsences: 0,
-      extrasOk: [{date:"02/02", time:"01:07"}],
-      extrasBad: [{date:"07/02", time:"09:04"}],
-      absences: [{date:"02/02"}]
-    }];
+  // ========= PARSER (bem mais robusto) =========
+  function findEmployeeSections(text){
+    const re = /(Matr[ií]cula|Matricula|C[oó]digo)\s*[:\-]?\s*(\d{2,10})/gi;
+    const hits = [];
+    let m;
+    while((m = re.exec(text)) !== null){
+      hits.push({ idx: m.index, label: m[1], code: m[2] });
+    }
+    if(hits.length === 0) return [];
+
+    const sections = [];
+    for(let i=0;i<hits.length;i++){
+      const start = hits[i].idx;
+      const end = (i < hits.length-1) ? hits[i+1].idx : text.length;
+      sections.push({
+        code: hits[i].code,
+        raw: text.slice(start, end)
+      });
+    }
+    return sections;
   }
 
-  // ========= RENDER (prova) =========
+  function guessName(globalText, sectionStartIndex){
+    const before = globalText.slice(Math.max(0, sectionStartIndex - 160), sectionStartIndex);
+    const caps = before.match(/([A-ZÀ-Ú]{3,}(?:\s+[A-ZÀ-Ú]{2,}){1,10})\s*$/);
+    return caps ? caps[1].trim() : "";
+  }
+
+  function pickField(section, patterns){
+    for(const re of patterns){
+      const m = section.match(re);
+      if(m && m[1]) return normSpaces(m[1]).slice(0, 120);
+    }
+    return "";
+  }
+
+  function parseEmployees(text){
+    const sections = findEmployeeSections(text);
+
+    const rePos = /(Matr[ií]cula|Matricula|C[oó]digo)\s*[:\-]?\s*(\d{2,10})/gi;
+    const positions = [];
+    let pm;
+    while((pm = rePos.exec(text)) !== null){
+      positions.push({ idx: pm.index, code: pm[2] });
+    }
+
+    const employees = [];
+
+    for(let i=0;i<sections.length;i++){
+      const code = sections[i].code;
+      const block = sections[i].raw;
+
+      const startIdx = positions.find(x => x.code === code)?.idx ?? 0;
+      const name = guessName(text, startIdx);
+
+      const costCenter = pickField(block, [
+        /Centro\s+de\s+Custo\s*[:\-]\s*([^]+?)\s+(?:Empresa|Cargo|Setor|Matr[ií]cula|Matricula|C[oó]digo|Dias|Faltas|$)/i,
+        /C\.?\s*Custo\s*[:\-]\s*([^]+?)\s+(?:Empresa|Cargo|Setor|Matr[ií]cula|Matricula|C[oó]digo|Dias|Faltas|$)/i,
+        /Setor\s*[:\-]\s*([^]+?)\s+(?:Empresa|Cargo|Centro|Matr[ií]cula|Matricula|C[oó]digo|Dias|Faltas|$)/i
+      ]);
+
+      const company = pickField(block, [
+        /Empresa\s*[:\-]\s*([^]+?)\s+(?:Centro|Cargo|Setor|Matr[ií]cula|Matricula|C[oó]digo|Dias|Faltas|$)/i,
+        /Raz[aã]o\s+Social\s*[:\-]\s*([^]+?)\s+(?:Centro|Cargo|Setor|Matr[ií]cula|Matricula|C[oó]digo|Dias|Faltas|$)/i
+      ]);
+
+      const unjustifiedAbsences = parseInt((block.match(/Faltas\s+Injustificadas\s*[:\-]\s*(\d{1,3})/i)?.[1]) || "0", 10);
+      const totalAbsences = parseInt((block.match(/Total\s+de\s+Faltas\s*[:\-]\s*(\d{1,3})/i)?.[1]) || String(unjustifiedAbsences||0), 10);
+      const daysWorked = parseInt((block.match(/Dias\s+Trabalhados\s*[:\-]\s*(\d{1,2})/i)?.[1]) || "0", 10);
+
+      const extraHoursAll = [];
+      const reDayTime = /(\d{2}\/\d{2}).{0,25}?(\d{2}:\d{2})/g;
+      let hm;
+      while((hm = reDayTime.exec(block)) !== null){
+        const date = hm[1];
+        const time = hm[2];
+
+        const h = parseInt(time.slice(0,2),10);
+        const mm = parseInt(time.slice(3,5),10);
+        if(Number.isNaN(h) || Number.isNaN(mm) || h>23 || mm>59) continue;
+
+        const minutes = hhmmToMinutes(time);
+        if(minutes <= 0) continue;
+
+        extraHoursAll.push({ date, time, minutes });
+      }
+
+      const extrasOk = extraHoursAll.filter(x => x.minutes <= EXTRA_LIMIT_MIN);
+      const extrasBad = extraHoursAll.filter(x => x.minutes > EXTRA_LIMIT_MIN);
+
+      const absences = [];
+      const reAbs1 = /FALTA\s+(\d{2}\/\d{2})/gi;
+      const reAbs2 = /(\d{2}\/\d{2})\s+FALTA/gi;
+      let a;
+      while((a = reAbs1.exec(block)) !== null){ absences.push({ date:a[1] }); }
+      while((a = reAbs2.exec(block)) !== null){ absences.push({ date:a[1] }); }
+
+      const seen = new Set();
+      const absUnique = absences.filter(x => x.date && !seen.has(x.date) && (seen.add(x.date), true));
+
+      const include = extrasBad.length > 0 || unjustifiedAbsences >= 10;
+      if(!include) continue;
+
+      employees.push({
+        name, code, costCenter, company,
+        daysWorked, totalAbsences, unjustifiedAbsences,
+        extrasOk: extrasOk.map(({date,time})=>({date,time})),
+        extrasBad: extrasBad.map(({date,time})=>({date,time})),
+        absences: absUnique
+      });
+    }
+
+    return employees;
+  }
+
+  // ========= RENDER =========
   function render(employees){
     if(!employees.length){
       $("cards").innerHTML = `
         <div class="card" style="border-color: var(--border);">
-          <div style="font-weight:900; color: var(--navy);">Não consegui extrair texto do PDF.</div>
-          <div style="margin-top:8px; color:#64748b;">Se o PDF for escaneado (imagem), precisa OCR. Se for texto, vamos ajustar o parser.</div>
+          <div style="font-weight:900; color: var(--navy);">Nenhum colaborador se enquadrou nas regras.</div>
+          <div class="meta" style="margin-top:8px;">Se você sabe que deveria aparecer alguém, o PDF pode estar com rótulos diferentes (ex.: “Cód.” ao invés de “Matrícula”).</div>
         </div>
       `;
       return;
     }
 
-    $("cards").innerHTML = employees.map(e => `
+    $("cards").innerHTML = employees.map((e, idx)=>cardHtml(e, idx)).join("");
+
+    employees.forEach((e, idx)=>{
+      const openBtn1 = document.querySelector(`[data-open="${idx}"]`);
+      const openBtn2 = document.querySelector(`[data-open2="${idx}"]`);
+      const body = document.querySelector(`[data-body="${idx}"]`);
+      const chev = document.querySelector(`[data-chev="${idx}"]`);
+
+      function toggle(){
+        const isHidden = body.style.display === "none";
+        body.style.display = isHidden ? "" : "none";
+        chev.classList.toggle("open", isHidden);
+      }
+      openBtn1.addEventListener("click", toggle);
+      openBtn2.addEventListener("click", toggle);
+
+      const tabHoras = document.querySelector(`[data-tab="${idx}-horas"]`);
+      const tabFaltas = document.querySelector(`[data-tab="${idx}-faltas"]`);
+      const paneHoras = document.querySelector(`[data-pane="${idx}-horas"]`);
+      const paneFaltas = document.querySelector(`[data-pane="${idx}-faltas"]`);
+
+      tabHoras.addEventListener("click", ()=>{
+        tabHoras.classList.add("active"); tabFaltas.classList.remove("active");
+        paneHoras.style.display = ""; paneFaltas.style.display = "none";
+      });
+      tabFaltas.addEventListener("click", ()=>{
+        tabFaltas.classList.add("active"); tabHoras.classList.remove("active");
+        paneFaltas.style.display = ""; paneHoras.style.display = "none";
+      });
+    });
+  }
+
+  function cardHtml(e, idx){
+    const exceedCount = e.extrasBad.length;
+
+    const tilesBad = e.extrasBad.map(d=>{
+      const min = hhmmToMinutes(d.time);
+      const exceedBy = minutesToHHMM(min - EXTRA_LIMIT_MIN);
+      return `
+        <div class="tile red">
+          <div class="date">${escapeHtml(d.date)}</div>
+          <div class="time">${escapeHtml(d.time)}</div>
+          <div class="warn">⚠️ Excedeu ${escapeHtml(exceedBy)}</div>
+        </div>
+      `;
+    }).join("");
+
+    const tilesOk = e.extrasOk.map(d=>{
+      return `
+        <div class="tile">
+          <div class="date">${escapeHtml(d.date)}</div>
+          <div class="time">${escapeHtml(d.time)}</div>
+        </div>
+      `;
+    }).join("");
+
+    const faltasTiles = (e.absences || []).map(d=>{
+      return `
+        <div class="tile abs">
+          <div class="date">${escapeHtml(d.date)}</div>
+          <div class="time" style="font-size:14px;">Falta</div>
+        </div>
+      `;
+    }).join("");
+
+    const faltasAlert = (e.unjustifiedAbsences >= 10)
+      ? `<div class="alert abs">⚠️ Faltas injustificadas acima do limite (≥ 10).</div>`
+      : ``;
+
+    const heAlert = (exceedCount > 0)
+      ? `<div class="alert red">⚠️ ${exceedCount} dia(s) com hora extra acima do limite (${EXTRA_LIMIT_LABEL}).</div>`
+      : ``;
+
+    return `
       <div class="card">
-        <div style="font-weight:900; color: var(--navy); font-size:18px;">${e.name}</div>
-        <div style="margin-top:8px; color:#64748b;">
-          Se você está vendo este card, o PDF foi lido com sucesso ✅
+        <div class="card-head">
+          <div>
+            <h2 class="name">${escapeHtml(e.name || "—")}</h2>
+            <div class="meta">
+              <div><span style="color:#7b8aa5; font-weight:800;">Código (matrícula):</span> <b>${escapeHtml(e.code || "—")}</b></div>
+              <div><span style="color:#7b8aa5; font-weight:800;">Centro de custo:</span> ${escapeHtml(e.costCenter || "—")}</div>
+              <div><span style="color:#7b8aa5; font-weight:800;">Empresa:</span> ${escapeHtml(e.company || "—")}</div>
+            </div>
+          </div>
+
+          <div class="badges">
+            <span class="badge badge-red">⏱ ${exceedCount} dia(s) HE excedida</span>
+            <span class="badge badge-abs">🟡 ${e.unjustifiedAbsences ?? 0} faltas injust.</span>
+
+            <button class="btn-ghost" style="padding:8px 10px;border-radius:999px;"
+              data-open="${idx}" title="Expandir/Recolher">
+              <span class="chev open" data-chev="${idx}">⌄</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="stats">
+          <div class="stat">
+            <div class="label">Dias Trabalhados</div>
+            <div class="val">${escapeHtml(String(e.daysWorked ?? "—"))}</div>
+          </div>
+
+          <div class="stat">
+            <div class="label">Total de Faltas</div>
+            <div class="val">${escapeHtml(String(e.totalAbsences ?? 0))}</div>
+          </div>
+
+          <div class="stat ${e.unjustifiedAbsences >= 10 ? "warn":""}">
+            <div class="label">Faltas Injustificadas</div>
+            <div class="val">${escapeHtml(String(e.unjustifiedAbsences ?? 0))}</div>
+            ${e.unjustifiedAbsences >= 10 ? `<div class="mini">⚠️ Atenção: ≥ 10</div>` : ``}
+          </div>
+
+          <div class="stat">
+            <div class="label">Limite HE</div>
+            <div class="val">${EXTRA_LIMIT_LABEL}</div>
+          </div>
+        </div>
+
+        <div class="toggle" data-open2="${idx}">
+          <span class="chev open" data-chev="${idx}">⌄</span>
+          <span>Ver detalhes (Horas / Faltas)</span>
+        </div>
+
+        <div data-body="${idx}">
+          <div class="tabs">
+            <button class="tab active" data-tab="${idx}-horas" type="button">Horas</button>
+            <button class="tab" data-tab="${idx}-faltas" type="button">Faltas</button>
+          </div>
+
+          <div data-pane="${idx}-horas">
+            <div class="sub" style="margin:10px 0 0;">Verde = OK • Vermelho = Excedeu (&gt; ${EXTRA_LIMIT_LABEL})</div>
+            <div class="grid">
+              ${tilesBad}
+              ${tilesOk}
+              ${(tilesBad || tilesOk) ? "" : `<div class="meta">Sem horas encontradas no texto do PDF.</div>`}
+            </div>
+            ${heAlert}
+          </div>
+
+          <div data-pane="${idx}-faltas" style="display:none;">
+            <div class="sub" style="margin:10px 0 0;">Amarelo = Faltas (datas encontradas no PDF)</div>
+            <div class="grid">
+              ${faltasTiles || `<div class="meta">Sem dias de faltas detectados no texto do PDF.</div>`}
+            </div>
+            ${faltasAlert}
+          </div>
         </div>
       </div>
-    `).join("");
+    `;
   }
 
   // ========= UI =========
@@ -350,6 +826,13 @@
     const f = e.target.files && e.target.files[0];
     if(!f) return;
 
+    // garante PDF.js pronto
+    if(!initPdfJsOrShowError()){
+      currentFile = null;
+      $("pdfFile").value = "";
+      return;
+    }
+
     const isPdf = f.name.toLowerCase().endsWith(".pdf");
     if(!isPdf){
       currentFile = null;
@@ -358,6 +841,7 @@
       $("btnAnalyze").classList.add("btn-disabled");
       return;
     }
+
     currentFile = f;
     setMsg("PDF selecionado: " + f.name);
     $("btnAnalyze").disabled = false;
@@ -375,7 +859,9 @@
 
   $("btnAnalyze").addEventListener("click", async ()=>{
     if(!currentFile) return;
-    if(!ensurePdfJs()) return;
+
+    // garante PDF.js pronto
+    if(!initPdfJsOrShowError()) return;
 
     setLoading(true, "Carregando...", "Preparando leitura...");
     setMsg("Carregando...");
@@ -383,22 +869,19 @@
     try{
       const buf = await currentFile.arrayBuffer();
       const text = await extractTextFromPdf(buf);
+
       setLoading(true, "Carregando...", "Interpretando dados...");
-
       const employees = parseEmployees(text);
-      render(employees);
 
+      render(employees);
       setMsg("");
     }catch(err){
       console.error(err);
-      setMsg("Erro ao analisar o PDF.");
+      setMsg("Erro ao analisar o PDF. (Se o PDF for escaneado como imagem, precisa OCR.)");
     }finally{
       setLoading(false);
     }
   });
-
-  // garante worker ao carregar
-  ensurePdfJs();
 </script>
 </body>
 </html>
